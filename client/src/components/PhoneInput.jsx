@@ -1,22 +1,28 @@
+// C:\Users\Asus\code\Koset Console\client\src\components\PhoneInput.jsx
+
 export default function PhoneInput({ value, onChange }) {
   const handleChange = (e) => {
-    let num = e.target.value.replace(/\D/g, "");
-    if (!num.startsWith("91")) num = "91" + num;
-    onChange("+" + num);
+    // Allow digits and "+"
+    const raw = e.target.value.replace(/[^\d+]/g, "");
+
+    // If user doesn't start with "+", assume country code is missing and prepend "+"
+    let next = raw;
+    if (next && !next.startsWith("+")) {
+      next = "+" + next;
+    }
+
+    onChange(next);
   };
 
   return (
     <div className="relative">
-      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-        +91
-      </span>
       <input
         type="tel"
-        inputMode="numeric"
-        placeholder="12345 67890"
-        value={value.replace("+91", "")}
+        inputMode="tel"
+        placeholder="+919876543210"
+        value={value}
         onChange={handleChange}
-        className="w-full pl-12 pr-4 py-2.5 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition placeholder-gray-400"
+        className="w-full px-4 pr-4 py-2.5 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition placeholder-gray-400"
       />
     </div>
   );

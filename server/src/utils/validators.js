@@ -32,3 +32,10 @@ export const verifyEmailOtpBody = z.object({
   code: z.string().length(6),
   nonce: z.string().uuid()
 });
+
+// 🔹 NEW: Profile schema for signup details (all optional, trimmed)
+export const profileBody = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(120).optional(),
+  company: z.string().trim().max(120).optional(),
+  role: z.string().trim().max(120).optional(),
+});

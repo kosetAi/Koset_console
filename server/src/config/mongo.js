@@ -4,5 +4,5 @@ import { env } from './env.js';
 export async function connectMongo() {
   mongoose.set('strictQuery', true);
   await mongoose.connect(env.mongoUri, { autoIndex: true });
-  console.log('Mongo connected');
+  console.log('Mongo connected',mongoose.connection.name);
 }

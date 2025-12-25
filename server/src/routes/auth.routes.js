@@ -31,4 +31,16 @@ router.get('/google/callback',
   }
 );
 
+router.post('/logout', (req, res) => {
+  res.clearCookie(env.cookieName, {
+    httpOnly: true,
+    secure: env.cookieSecure,
+    sameSite: env.cookieSameSite,
+    domain: env.cookieDomain,
+    path: '/',
+  });
+  return res.json({ ok: true });
+});
+
+
 export default router;

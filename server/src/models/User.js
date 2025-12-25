@@ -5,6 +5,8 @@ const UserSchema = new mongoose.Schema({
   phone: { type: String, index: true, unique: true, sparse: true }, // E.164
   name: { type: String },
   avatarUrl: { type: String },
+  company: { type: String },
+  role: { type: String },
   phoneVerifiedAt: { type: Date },
   lastLoginAt: { type: Date },
   providers: {

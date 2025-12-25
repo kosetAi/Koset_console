@@ -13,6 +13,14 @@ const router = Router();
 // PHONE OTP - SEND
 router.post('/send', strictLimiter, async (req, res) => {
   try {
+    // Temporary Restriction: Block Phone Login if ALLOWED_EMAILS is active
+    if (process.env.ALLOWED_EMAILS) {
+      const allowedList = process.env.ALLOWED_EMAILS.split(',').map(e => e.trim().toLowerCase());
+      if (!allowedList.includes(email.toLowerCase())) {
+        // Return a specific error code
+        throw { code: 'ACCESS_DENIED', message: 'Access restricted: This email is not on the allowed list.' };
+      }
+    }
     const { phone, context } = sendOtpBody.parse(req.body);
     // Logic to prevent signup if user exists, and vice-versa
     const userExists = await User.findOne({ phone });

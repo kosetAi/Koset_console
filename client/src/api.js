@@ -1,28 +1,58 @@
-const API = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// C:\Users\Asus\code\Koset Console\client\src\api.js
 
-export async function post(path, body) {
-  const res = await fetch(API + path, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  return res.json();
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+async function request(method, path, body) {
+  try {
+    const res = await fetch(API + path, {
+      method,
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+
+    if (!res.ok) {
+      // If server sent structured error, surface it
+      if (data?.error) {
+        return { ok: false, error: data.error };
+      }
+      // Fallback generic error
+      return {
+        ok: false,
+        error: {
+          code: "HTTP_ERROR",
+          message: `HTTP ${res.status} - ${res.statusText}`,
+        },
+      };
+    }
+
+    // Success
+    return data;
+  } catch (err) {
+    return {
+      ok: false,
+      error: { code: "NETWORK_ERROR", message: err.message },
+    };
+  }
 }
 
-export async function put(path, body) {
-  const res = await fetch(API + path, {
-    method: 'PUT',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  return res.json();
+export function post(path, body) {
+  return request("POST", path, body);
 }
 
-export async function get(path) {
-  const res = await fetch(API + path, { credentials: 'include' });
-  return res.json();
+export function put(path, body) {
+  return request("PUT", path, body);
+}
+
+export function get(path) {
+  return request("GET", path);
 }
 
 export const endpoints = {

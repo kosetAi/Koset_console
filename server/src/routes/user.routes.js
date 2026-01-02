@@ -13,6 +13,7 @@ router.get('/', requireAuth, requireOtpVerified, async (req, res) => {
   return res.json({
     user: {
       id: user._id,
+      uid: user.uid, // Exposing UID
       email: user.email,
       phone: user.phone,
       name: user.name,

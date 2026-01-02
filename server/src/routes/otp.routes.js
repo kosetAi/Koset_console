@@ -9,6 +9,7 @@ import { toErrorResponse } from '../utils/errors.js';
 import { env } from '../config/env.js';
 import { signSession, cookieOptions, verifySession } from '../auth/jwt.js';
 import { User } from '../models/User.js';
+import { ensureUserUID } from '../utils/uid.js'; // Added import
 
 const router = Router();
 
@@ -107,6 +108,7 @@ router.post('/verify-email', strictLimiter, async (req, res) => {
     if (!user) {
         user = await User.create({ email });
     }
+    await ensureUserUID(user);
     
     user.lastLoginAt = new Date();
     await user.save();

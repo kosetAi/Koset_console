@@ -5,6 +5,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from '../config/env.js';
 import { User } from '../models/User.js';
 import { OAuthAccount } from '../models/OAuthAccount.js';
+import { ensureUserUID } from '../utils/uid.js';
 
 passport.use(
   new GoogleStrategy(
@@ -80,7 +81,8 @@ passport.use(
           } else {
             console.log(`🔗 [Google Auth] Linking existing user: ${user._id}`);
           }
-
+          await ensureUserUID(user); 
+          
           // Create new OAuth link
           account = await OAuthAccount.create({
             userId: user._id,

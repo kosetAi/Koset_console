@@ -38,6 +38,9 @@ export default function Profile() {
             Keep an eye on your daily spend and resource usage.
           </p>
         </div>
+        <span className="text-[11px] bg-gray-800/50 text-gray-300 px-2 py-0.5 rounded border border-gray-700 font-mono">
+              UID: {user?.uid}
+            </span>
 
         <button className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold shadow-md transition">
           + New

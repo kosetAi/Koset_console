@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
+    uid: { type: String, unique: true, sparse: true, index: true }, // Added UID field
   email: { type: String, index: true, sparse: true, lowercase: true, trim: true },
   phone: { type: String, index: true, unique: true, sparse: true }, // E.164
   name: { type: String },

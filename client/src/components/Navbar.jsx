@@ -53,6 +53,11 @@ export default function Navbar() {
 
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-48 bg-[#111317] border border-[#1A1D24] rounded-lg shadow-xl p-2">
+                  {/* UID Display */}
+                  <div className="px-4 py-2 border-b border-gray-800 mb-1">
+                    <p className="text-[10px] text-gray-500 uppercase font-bold">User ID</p>
+                    <p className="text-[12px] text-violet-400 font-mono select-all">UID: {user?.uid}</p>
+                  </div>
                   <Link
                     to="/profile"
                     className="block px-4 py-2 text-sm text-[#E6E7EC] hover:bg-[#1C1F26] rounded-md transition"

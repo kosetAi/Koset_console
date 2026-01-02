@@ -789,30 +789,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="w-full md:w-96">
-            <label className="block text-sm text-slate-300 mb-1">
-              Backend URL
-            </label>
-            <div className="flex gap-2">
-              <input
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
-                className="flex-1 bg-slate-900/60 border border-slate-700 rounded-md p-2 text-sm"
-              />
-              <button
-                onClick={saveServer}
-                className="px-3 rounded-md bg-cyan-300 text-slate-900 font-medium"
-              >
-                Save
-              </button>
-              <button
-                onClick={ping}
-                className="px-3 rounded-md bg-slate-700 text-sm"
-              >
-                Ping
-              </button>
-            </div>
-          </div>
+          
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">

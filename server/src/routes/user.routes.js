@@ -4,6 +4,7 @@ import { requireOtpVerified } from '../middleware/requireOtpVerified.js';
 import { setPhoneBody, profileBody } from '../utils/validators.js';
 import { User } from '../models/User.js';
 import { sendOtp } from '../otp/otp.service.js';
+import { File } from "../models/File.js";
 
 const router = Router();
 
@@ -20,6 +21,18 @@ router.get('/', requireAuth, requireOtpVerified, async (req, res) => {
       role: user.role || null
     }
   });
+});
+
+router.get('/files', requireAuth, async (req, res) => {
+  try {
+    const files = await File.find({ userId: req.session.sub })
+      .sort({ createdAt: -1 }) // Newest first
+      .limit(20); // Limit to last 20 for performance
+    
+    return res.json({ ok: true, files });
+  } catch (err) {
+    return res.status(500).json({ error: { message: "Could not fetch files" } });
+  }
 });
 
 router.put('/phone', requireAuth, async (req, res) => {

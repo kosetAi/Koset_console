@@ -2,7 +2,10 @@ import 'dotenv/config';
 
 function required(name) {
   const v = process.env[name];
-  if (!v) throw new Error(`Missing env: ${name}`);
+  if (!v) {
+    console.error(`❌ FATAL: Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
   return v;
 }
 
@@ -17,6 +20,15 @@ export const env = {
   cookieSameSite: process.env.COOKIE_SAMESITE || 'Lax',
   frontendOrigin: required('FRONTEND_ORIGIN'),
   apiBaseUrl: required('API_BASE_URL'),
+
+  // ✅ ADDED STRICT AWS CONFIGURATION
+  aws: {
+    accessKeyId: required('AWS_ACCESS_KEY_ID'),
+    secretAccessKey: required('AWS_SECRET_ACCESS_KEY'),
+    bucketName: required('AWS_BUCKET_NAME'),
+    region: required('AWS_REGION'), // Must match AWS Console exactly
+  },
+
   google: {
     clientId: required('GOOGLE_CLIENT_ID'),
     clientSecret: required('GOOGLE_CLIENT_SECRET'),
@@ -27,7 +39,6 @@ export const env = {
     token: required('TWILIO_AUTH_TOKEN'),
     from: required('TWILIO_FROM_NUMBER')
   },
-  // Added for Nodemailer (e.g., using Gmail)
   emailUser: required('EMAIL_USER'),
   emailPass: required('EMAIL_PASS'),
   otp: {

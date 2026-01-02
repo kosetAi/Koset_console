@@ -1,11 +1,10 @@
-// C:\Users\Asus\code\Koset Console\client\src\pages\Login.jsx
+// === C:\Users\Asus\code\Koset Console\client\src\pages\Login.jsx ===
 
 import React, { useState } from "react";
 import { post, endpoints } from "../api.js";
 import { Link } from "react-router-dom";
 
 export default function Login() {
-  // Removed 'method' and 'phone' state since we only use email now
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -13,11 +12,20 @@ export default function Login() {
   const params = new URLSearchParams(window.location.search);
   const errorParam = params.get("err");
 
+  // Determine error message based on URL param
+  let errorMessage = "";
+  if (errorParam === "access_restricted") {
+    errorMessage = "Access Restricted: This email is not on the allowed list.";
+  } else if (errorParam === "google_failed") {
+    errorMessage = "Google login failed. Please try again.";
+  } else if (errorParam) {
+    errorMessage = "An error occurred during login. Please try again.";
+  }
+
   async function sendOtp() {
     setSending(true);
     setError("");
 
-    // Validation: Email only
     if (!email || !email.includes("@")) {
       setSending(false);
       setError("Please enter a valid email.");
@@ -31,7 +39,6 @@ export default function Login() {
     setSending(false);
 
     if (res?.ok) {
-      // Redirect to OTP page
       const params = `email=${encodeURIComponent(email)}`;
       const url = `/otp?${params}&nonce=${res.nonce}`;
       window.location.href = url;
@@ -58,10 +65,10 @@ export default function Login() {
             Login to continue to the Koset Console.
           </p>
 
-          {/* Access Denied Message */}
-          {errorParam && (
+          {/* Conditional Error Display */}
+          {errorMessage && (
             <div className="mt-6 bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-3 rounded-xl text-sm text-center">
-              <strong>Access Restricted:</strong> This email is not on the allowed list.
+              <strong>Error:</strong> {errorMessage}
             </div>
           )}
 
@@ -83,7 +90,6 @@ export default function Login() {
             <div className="flex-1 h-px bg-white/20"></div>
           </div>
 
-          {/* MANUAL EMAIL INPUT - Always Visible */}
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <label className="text-sm font-medium text-white/80 mb-1 block">
               Email Address

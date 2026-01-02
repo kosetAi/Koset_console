@@ -1,3 +1,5 @@
+// === C:\Users\Asus\code\Koset Console\server\src\routes\otp.routes.js ===
+
 import { Router } from 'express';
 import { strictLimiter } from '../middleware/rateLimit.js';
 import { sendOtp, verifyOtp } from '../otp/otp.service.js';
@@ -13,15 +15,8 @@ const router = Router();
 // PHONE OTP - SEND
 router.post('/send', strictLimiter, async (req, res) => {
   try {
-    // Temporary Restriction: Block Phone Login if ALLOWED_EMAILS is active
-    if (process.env.ALLOWED_EMAILS) {
-      const allowedList = process.env.ALLOWED_EMAILS.split(',').map(e => e.trim().toLowerCase());
-      if (!allowedList.includes(email.toLowerCase())) {
-        // Return a specific error code
-        throw { code: 'ACCESS_DENIED', message: 'Access restricted: This email is not on the allowed list.' };
-      }
-    }
     const { phone, context } = sendOtpBody.parse(req.body);
+    
     // Logic to prevent signup if user exists, and vice-versa
     const userExists = await User.findOne({ phone });
     if (context === 'signup' && userExists) throw { code: 'USER_EXISTS', message: 'An account with this phone number already exists.' };
@@ -68,7 +63,7 @@ router.post('/verify', strictLimiter, async (req, res) => {
       sub: String(user._id),
       email: user.email || null,
       otpVerifiedAt: new Date().toISOString()
-    }, 60 * 60 * 24 * 7); // 7d
+    }, 60 * 60 * 24 * 7); 
 
     res.cookie(env.cookieName, sessionToken, cookieOptions(1000 * 60 * 60 * 24 * 7));
     return res.json({ ok: true });
@@ -81,6 +76,16 @@ router.post('/verify', strictLimiter, async (req, res) => {
 router.post('/send-email', strictLimiter, async (req, res) => {
   try {
     const { email, context } = sendEmailOtpBody.parse(req.body);
+
+    // ⛔ Strict Allow List Check
+    const allowListVar = process.env.ALLOWED_EMAILS;
+    if (allowListVar && allowListVar.trim().length > 0) {
+      const allowedList = allowListVar.split(',').map(e => e.trim().toLowerCase());
+      if (!allowedList.includes(email.toLowerCase())) {
+         throw { code: 'ACCESS_DENIED', message: 'Access Restricted: This email is not on the allowed list.' };
+      }
+    }
+
     const userExists = await User.findOne({ email });
     if (context === 'signup' && userExists) throw { code: 'USER_EXISTS', message: 'An account with this email already exists.' };
     if (context === 'signin' && !userExists) throw { code: 'USER_NOT_FOUND', message: 'No account found with this email.' };

@@ -2,10 +2,22 @@
 
 import React from "react";
 import { useAuth } from "../context/AuthContext";
-
+import { get } from "../api.js";
+import { useEffect, useState } from "react";
+import { FiFile, FiClock, FiDatabase, FiCode } from "react-icons/fi";
 
 export default function Profile() {
   const { user } = useAuth();
+  const [files, setFiles] = useState([]);
+
+    useEffect(() => {
+    // Fetch file history
+    async function fetchHistory() {
+      const res = await get("/me/files");
+      if (res.ok) setFiles(res.files);
+    }
+    fetchHistory();
+  }, []);
 
   const displayName =
     user?.name ||
@@ -128,6 +140,45 @@ export default function Profile() {
           </div>
         </div>
       </div>
+       <div className="bg-[#15181D] rounded-xl border border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-200 mb-4">Recent Files</h2>
+          
+          {files.length === 0 ? (
+            <p className="text-gray-400 text-sm">No files uploaded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-gray-400">
+                <thead className="text-xs uppercase bg-[#111315] text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3">File Name</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Size</th>
+                    <th className="px-4 py-3">Uploaded</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {files.map((file) => (
+                    <tr key={file._id} className="hover:bg-[#1A1D24] transition">
+                      <td className="px-4 py-3 font-medium text-white flex items-center gap-2">
+                        {file.category === 'dataset' ? <FiDatabase className="text-emerald-400"/> : <FiCode className="text-cyan-400"/>}
+                        {file.originalName}
+                      </td>
+                      <td className="px-4 py-3 capitalize">{file.category}</td>
+                      <td className="px-4 py-3">{(file.size / 1024).toFixed(1)} KB</td>
+                      <td className="px-4 py-3">{new Date(file.createdAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">
+                         <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-400 border border-green-500/20">
+                           Synced
+                         </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+       </div>
     </div>
   );
 }

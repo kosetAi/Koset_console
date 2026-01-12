@@ -16,8 +16,12 @@ export default function Home() {
   const [serverUrl, setServerUrl] = useState(
     () =>
       localStorage.getItem(LS.server) ||
-      "https://koset-agents-deploy.onrender.com"
+      "http://localhost:8000"
   );
+
+    // Change this line (around line 30)
+const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
+
 
   const [projectName, setProjectName] = useState("default_project");
   const [datasetName, setDatasetName] = useState("default_dataset");
@@ -25,6 +29,7 @@ export default function Home() {
   const trainingRef = useRef(null);
   const datasetRef = useRef(null);
 
+  
   const [trainingFilesList, setTrainingFilesList] = useState([]);
   const [datasetFilesList, setDatasetFilesList] = useState([]);
 
@@ -315,6 +320,7 @@ export default function Home() {
       const res = await fetch(normalizeServer(serverUrl) + "/upload", {
         method: "POST",
         body: fd,
+        credentials: "include",
       });
       const data = await res.json();
 
@@ -422,10 +428,11 @@ export default function Home() {
     }
 
     try {
-      const res = await fetch(normalizeServer(serverUrl) + "/analyze", {
+      const res = await fetch(normalizeServer(ANALYSIS_URL) + "/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+       
       });
       const data = await res.json();
 
@@ -788,8 +795,6 @@ export default function Home() {
               what's happening.
             </p>
           </div>
-
-          
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">

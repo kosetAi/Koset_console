@@ -1,6 +1,10 @@
 // C:\Users\Asus\code\Koset Console\client\src\api.js
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL;
+
+if (!API) {
+  console.error("VITE_API_URL is not defined! Check your .env file.");
+}
 
 async function request(method, path, body) {
   try {

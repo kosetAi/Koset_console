@@ -68,7 +68,17 @@ export default function App() {
 
           {/* --- PROTECTED ROUTES --- */}
           {/* Root Path Decision */}
-          <Route path="/" element={<RootRoute />} />
+         <Route
+  path="/"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout>
+        <Home />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+
 
           {/* All other Dashboard Pages */}
           <Route path="/home" element={

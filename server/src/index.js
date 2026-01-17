@@ -12,7 +12,14 @@ import authRoutes from './routes/auth.routes.js';
 import otpRoutes from './routes/otp.routes.js';
 import userRoutes from './routes/user.routes.js';
 import gpuRoutes from "./routes/gpu.routes.js";
-import uploadRoutes from './routes/upload.routes.js'; 
+import uploadRoutes from './routes/upload.routes.js';
+
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ESM dirname fix
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -20,27 +27,32 @@ app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ 1. SETUP CORS CORRECTLY
-app.use(cors({
-  origin: env.frontendOrigin, // "http://localhost:5173"
-  credentials: true, // Allow cookies
-}));
+// correct build path
+const buildpath = path.join(__dirname, "../client/dist");
+
+// CORS
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN,
+    credentials: true,
+  })
+);
+
 
 app.use(passport.initialize());
 
-// ✅ 2. ADD GLOBAL LOGGER (Put this BEFORE routes)
 app.use((req, res, next) => {
   console.log(`📡 [${req.method}] ${req.path}`);
   next();
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/', (_req, res) => res.json({ ok: true }));
 
 app.use('/auth', authRoutes);
 app.use('/otp', otpRoutes);
 app.use('/me', userRoutes);
-app.use("/gpu", gpuRoutes);
-app.use('/upload', uploadRoutes); 
+app.use('/gpu', gpuRoutes);
+app.use('/upload', uploadRoutes);
 
 connectMongo().then(() => {
   app.listen(env.port, () => {

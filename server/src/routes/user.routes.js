@@ -8,12 +8,14 @@ import { File } from "../models/File.js";
 
 const router = Router();
 
-router.get('/', requireAuth, requireOtpVerified, async (req, res) => {
+// ✅ FIX: Removed 'requireOtpVerified' middleware
+// This prevents the app from redirecting to login if OTP is pending.
+router.get('/', requireAuth, async (req, res) => {
   const user = await User.findById(req.session.sub);
   return res.json({
     user: {
       id: user._id,
-      uid: user.uid, // Exposing UID
+      uid: user.uid,
       email: user.email,
       phone: user.phone,
       name: user.name,
@@ -27,8 +29,8 @@ router.get('/', requireAuth, requireOtpVerified, async (req, res) => {
 router.get('/files', requireAuth, async (req, res) => {
   try {
     const files = await File.find({ userId: req.session.sub })
-      .sort({ createdAt: -1 }) // Newest first
-      .limit(20); // Limit to last 20 for performance
+      .sort({ createdAt: -1 }) 
+      .limit(20); 
     
     return res.json({ ok: true, files });
   } catch (err) {
@@ -40,13 +42,12 @@ router.put('/phone', requireAuth, async (req, res) => {
   const { phone } = setPhoneBody.parse(req.body);
   const user = await User.findById(req.session.sub);
   user.phone = phone;
-  user.phoneVerifiedAt = null; // must reverify
+  user.phoneVerifiedAt = null; 
   await user.save();
   const { nonce, resendAt } = await sendOtp({ phone, purpose: 'signup' });
   return res.json({ ok: true, nonce, resendAt, message: 'Phone updated. Verify OTP to complete.' });
 });
 
-// 🔹 NEW: Save profile details after OTP verification
 router.put('/profile', requireAuth, requireOtpVerified, async (req, res) => {
   const { name, company, role } = profileBody.parse(req.body);
   const user = await User.findById(req.session.sub);

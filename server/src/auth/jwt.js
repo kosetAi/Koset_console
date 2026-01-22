@@ -1,5 +1,3 @@
-// C:\Users\Asus\code\Koset Console\server\src\auth\jwt.js
-
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 
@@ -14,14 +12,14 @@ export function verifySession(token) {
 export function cookieOptions(maxAgeMs) {
   const options = {
     httpOnly: true,
-    secure: env.cookieSecure,
+    secure: env.cookieSecure, // Controlled by .env
     sameSite: env.cookieSameSite,
     path: '/',
     maxAge: maxAgeMs
   };
 
-  // FIX: Only set domain if it is explicitly defined and not localhost
-  // If undefined, the browser defaults to the current host (EC2 address), which fixes the mismatch.
+  // ✅ FIX: Only set domain if it is explicitly defined and NOT localhost.
+  // This allows the cookie to default to "Host Only" on AWS EC2 IPs.
   if (env.cookieDomain && env.cookieDomain !== 'localhost') {
     options.domain = env.cookieDomain;
   }

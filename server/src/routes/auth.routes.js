@@ -1,5 +1,3 @@
-// === C:\Users\Asus\code\Koset Console\server\src\routes\auth.routes.js ===
-
 import { Router } from 'express';
 import passport from 'passport';
 import { env } from '../config/env.js';
@@ -8,6 +6,7 @@ import { sendEmailOtp } from '../otp/emailOtp.service.js';
 
 const router = Router();
 
+// --- GOOGLE AUTH ROUTES ---
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback',
@@ -28,7 +27,6 @@ router.get('/google/callback',
         return res.redirect(`${env.frontendOrigin}/login?err=google_failed`);
       }
       
-      // Success
       req.user = user;
       next();
     })(req, res, next);
@@ -36,20 +34,18 @@ router.get('/google/callback',
   async (req, res) => {
     const user = req.user;
 
-    // Create a temporary session cookie
     const token = signSession({
       sub: String(user._id),
       email: user.email,
       otpVerifiedAt: null
-    }, 60 * 60 * 6); // 6 hours
+    }, 60 * 60 * 6);
 
-    res.cookie(env.cookieName, token, cookieOptions(1000 * 60 * 60 * 6));
+    const options = cookieOptions(1000 * 60 * 60 * 6);
+    res.cookie(env.cookieName, token, options);
 
     try {
       console.log(`📧 [Auth Route] Sending OTP to ${user.email}...`);
       const { nonce } = await sendEmailOtp({ email: user.email, purpose: "signin" });
-      
-      // Redirect to OTP page
       return res.redirect(
         `${env.frontendOrigin}/otp?email=${encodeURIComponent(user.email)}&nonce=${nonce}`
       );
@@ -60,14 +56,25 @@ router.get('/google/callback',
   }
 );
 
+// ✅ FIX: Aggressive Logout Logic
 router.post('/logout', (req, res) => {
+  console.log("👋 [Logout] Attempting aggressive cookie clear...");
+
+  // 1. Clear with Environment settings
   res.clearCookie(env.cookieName, {
     httpOnly: true,
     secure: env.cookieSecure,
     sameSite: env.cookieSameSite,
-    domain: env.cookieDomain,
     path: '/',
+    domain: env.cookieDomain || undefined
   });
+
+  // 2. Clear Host-Only (Default fallback)
+  res.clearCookie(env.cookieName, { path: '/' });
+
+  // 3. Clear with specific request hostname
+  res.clearCookie(env.cookieName, { path: '/', domain: req.hostname });
+
   return res.json({ ok: true });
 });
 

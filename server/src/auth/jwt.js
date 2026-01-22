@@ -10,12 +10,19 @@ export function verifySession(token) {
 }
 
 export function cookieOptions(maxAgeMs) {
-  return {
+  const options = {
     httpOnly: true,
-    secure: env.cookieSecure,
-    sameSite: env.cookieSameSite,
-    domain: env.cookieDomain,
     path: '/',
-    maxAge: maxAgeMs
+    maxAge: maxAgeMs,
+    // Dynamic logic to handle AWS environments without custom domains
+    sameSite: env.nodeEnv === 'production' ? 'Lax' : 'Lax', 
+    secure: env.cookieSecure,
   };
+
+  // Only set domain if it's not localhost and not an AWS default endpoint
+  if (env.cookieDomain && env.cookieDomain !== 'localhost' && !env.cookieDomain.includes('amazonaws.com')) {
+    options.domain = env.cookieDomain;
+  }
+  
+  return options;
 }

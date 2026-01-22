@@ -20,7 +20,7 @@ export function cookieOptions(maxAgeMs) {
   };
 
   // Only set domain if it's not localhost and not an AWS default endpoint
-  if (env.cookieDomain && env.cookieDomain !== 'localhost' && !env.cookieDomain.includes('amazonaws.com')) {
+  if (env.cookieDomain && env.cookieDomain.trim() !== "") {
     options.domain = env.cookieDomain;
   }
   

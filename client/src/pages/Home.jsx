@@ -14,9 +14,7 @@ export default function Home() {
   const LS = { server: "koset_server", last: "koset_last_upload" };
 
   const [serverUrl, setServerUrl] = useState(
-    () =>
-      localStorage.getItem(LS.server) ||
-      "http://localhost:8000"
+    "http://ec2-3-108-144-186.ap-south-1.compute.amazonaws.com:8000"
   );
 
     // Change this line (around line 30)

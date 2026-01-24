@@ -1,10 +1,14 @@
+// === C:\Users\Asus\code\Koset Console\server\src\routes\upload.routes.js ===
+
 import { Router } from "express";
 import multer from "multer";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client, BUCKET_NAME } from "../config/s3.js";
 import { File } from "../models/File.js";
-import { User } from "../models/User.js"; // Import User model to fetch UID
+import { User } from "../models/User.js"; 
 import { requireAuth } from "../middleware/requireAuth.js";
+// âœ… FIX: Import this middleware
+import { requireOtpVerified } from "../middleware/requireOtpVerified.js";
 
 const router = Router();
 
@@ -19,7 +23,6 @@ const upload = multer({
 function getFolderAndCategory(fieldName) {
   if (fieldName === 'training') return 'training-data';
   if (fieldName === 'dataset') return 'datasets';
-  // Fallback map based on multers fieldname in request
   if (fieldName === 'training_files') return 'training-data';
   if (fieldName === 'dataset_files') return 'datasets';
   return 'other';
@@ -30,10 +33,7 @@ async function uploadToS3(file, userObj, categoryField) {
   // Sanitize filename
   const sanitizedName = file.originalname.replace(/\s+/g, "_");
   
-  // STRICT REQUIREMENT: Map to specific folder names
   const s3Folder = getFolderAndCategory(categoryField);
-  
-  // STRICT REQUIREMENT: Use User UID, not Mongo _id
   const key = `users/${userObj.uid}/${s3Folder}/${timestamp}-${sanitizedName}`;
 
   console.log(`[S3 Upload Start] ${file.originalname} -> Key: ${key}`);
@@ -52,12 +52,12 @@ async function uploadToS3(file, userObj, categoryField) {
 
     // 2. Save to Database
     const newFile = await File.create({
-      userId: userObj._id, // Keep Mongo ID for DB relational linking
+      userId: userObj._id, 
       originalName: file.originalname,
       s3Key: key,
       size: file.size,
       mimeType: file.mimetype,
-      category: categoryField // Keep the logical category name in DB ("training" or "dataset")
+      category: categoryField 
     });
     
     console.log(`[DB Save Success] File ID: ${newFile._id}`);
@@ -73,6 +73,7 @@ async function uploadToS3(file, userObj, categoryField) {
 router.post(
   "/",
   requireAuth,
+  requireOtpVerified, // âœ… FIX: Enforce OTP verification before allowing uploads
   upload.fields([
     { name: "training_files", maxCount: 5 },
     { name: "dataset_files", maxCount: 5 },
@@ -85,7 +86,6 @@ router.post(
 
       const userId = req.session.sub;
       
-      // FIX: Fetch full user object to get the UID
       const user = await User.findById(userId);
       if (!user || !user.uid) {
         return res.status(404).json({ error: { message: "User UID not found" } });
@@ -99,7 +99,6 @@ router.post(
       const savedTraining = [];
       const savedDataset = [];
 
-      // Upload in parallel passing the full user object
       await Promise.all([
         ...trainingFiles.map(f => uploadToS3(f, user, "training").then(dbFile => savedTraining.push(dbFile))),
         ...datasetFiles.map(f => uploadToS3(f, user, "dataset").then(dbFile => savedDataset.push(dbFile)))
@@ -115,7 +114,6 @@ router.post(
           saved_files: savedDataset.map(f => f.originalName),
           meta: savedDataset
         },
-        // Helpers for Home.jsx logic
         training_primary_file: savedTraining[0]?.s3Key || null, 
         dataset_primary_file: savedDataset[0]?.s3Key || null,
       });

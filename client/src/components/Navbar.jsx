@@ -39,17 +39,26 @@ export default function Navbar() {
 
           {user ? (
             <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-3 hover:bg-[#1A1D24] px-3 py-2 rounded-md transition"
-              >
-                <div className="h-10 w-10 rounded-full bg-[#22252B] text-[#E6E7EC] flex items-center justify-center font-semibold border border-[#2d3038]">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-[15px] font-medium text-[#E5E7EB] hidden sm:block">
-                  {displayName}
-                </span>
-              </button>
+             <button
+  onClick={() => setMenuOpen(!menuOpen)}
+  className="flex items-center gap-3 hover:bg-[#1A1D24] px-3 py-2 rounded-md transition"
+>
+  {user?.avatarUrl ? (
+    <img 
+      src={user.avatarUrl} 
+      alt={displayName} 
+      className="h-10 w-10 rounded-full border border-[#2d3038] object-cover"
+      referrerPolicy="no-referrer"
+    />
+  ) : (
+    <div className="h-10 w-10 rounded-full bg-[#22252B] text-[#E6E7EC] flex items-center justify-center font-semibold border border-[#2d3038]">
+      {displayName.charAt(0).toUpperCase()}
+    </div>
+  )}
+  <span className="text-[15px] font-medium text-[#E5E7EB] hidden sm:block">
+    {displayName}
+  </span>
+</button>
 
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-48 bg-[#111317] border border-[#1A1D24] rounded-lg shadow-xl p-2">

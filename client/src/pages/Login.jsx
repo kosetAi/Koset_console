@@ -15,7 +15,7 @@ export default function Login() {
   // Determine error message based on URL param
   let errorMessage = "";
   if (errorParam === "access_restricted") {
-    errorMessage = "Access Restricted: This email is not on the allowed list.";
+    errorMessage = "We're currently hand-crafting the Koset for a selected group. We've noted your interest and will reach out as soon as a spot opens up for you! ✨";
   } else if (errorParam === "google_failed") {
     errorMessage = "Google login failed. Please try again.";
   } else if (errorParam) {
@@ -68,7 +68,7 @@ export default function Login() {
           {/* Conditional Error Display */}
           {errorMessage && (
             <div className="mt-6 bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-3 rounded-xl text-sm text-center">
-              <strong>Error:</strong> {errorMessage}
+               {errorMessage}
             </div>
           )}
 

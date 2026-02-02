@@ -36,9 +36,22 @@ passport.use(
           const allowedList = allowListVar.split(',').map(e => e.trim().toLowerCase());
           
           if (!allowedList.includes(email)) {
-            console.warn(`⛔ [Google Auth] BLOCKED: ${email} is not in ALLOWED_EMAILS.`);
-            return done(null, false, { message: "Restricted" });
-          }
+  console.warn(`⛔ [Google Auth] BLOCKED: ${email} is not in ALLOWED_EMAILS. Recording attempt...`);
+  
+  // Requirement 1: Capture non-whitelisted details
+  try {
+    const { NotWhitelisted } = await import('../models/NotWhitelisted.js');
+    await NotWhitelisted.findOneAndUpdate(
+      { email }, 
+      { name: profile.displayName, provider: 'google', attemptedAt: new Date() }, 
+      { upsert: true }
+    );
+  } catch (dbErr) {
+    console.error("⚠️ Failed to record restricted attempt:", dbErr.message);
+  }
+
+  return done(null, false, { message: "Restricted" });
+}
         }
 
         console.log(`✅ [Google Auth] Email authorized: ${email}`);
@@ -71,16 +84,22 @@ passport.use(
           user = await User.findOne({ email });
           
           if (!user) {
-             user = new User({
-              email,
-              name: profile.displayName,
-              avatarUrl: profile.photos?.[0]?.value,
-            });
-            await user.save();
-            console.log(`🆕 [Google Auth] Created new user: ${user._id}`);
-          } else {
-            console.log(`🔗 [Google Auth] Linking existing user: ${user._id}`);
-          }
+  user = new User({
+    email,
+    name: profile.displayName,
+    avatarUrl: profile.photos?.[0]?.value,
+    // Requirement 2: Capture Auth Provider and Timestamp
+    createdAt: new Date(), 
+    providers: { google: { id: providerId } }
+  });
+  await user.save();
+  console.log(`🆕 [Google Auth] Created new user: ${user._id}`);
+} else {
+  // Update image if it changed on Google
+  user.avatarUrl = profile.photos?.[0]?.value;
+  await user.save();
+  console.log(`🔗 [Google Auth] Linking existing user: ${user._id}`);
+}
           await ensureUserUID(user); 
           
           // Create new OAuth link

@@ -27,6 +27,8 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false, // This stops the COOP error
+  originAgentCluster: false,      // This stops the Agent-Cluster error
 }));
 
 app.use(express.json());

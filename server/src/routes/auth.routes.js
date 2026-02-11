@@ -20,6 +20,7 @@ router.get('/google/callback',
         if (reason === "Restricted") return res.redirect(`${env.frontendOrigin}/login?err=access_restricted`);
         return res.redirect(`${env.frontendOrigin}/login?err=google_failed`);
       }
+      console.log("🚀 Redirecting to:", `${env.frontendOrigin}/otp...`);
       req.user = user;
       next();
     })(req, res, next);

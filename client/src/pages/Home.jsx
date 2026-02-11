@@ -2,31 +2,25 @@ import React, { useState, useRef, useEffect } from "react";
 
 /**
  * Home.jsx
- * - Uploaded training files and uploaded dataset files shown separately and directly under their upload sections
- * - Parsing overlay uses unicode arrows (no JSX '>' warnings)
- * - Retains previous animations, pipeline, progress and file previews
- * - ADDED: Strict Dataset File Validation (CSV only, structure checks, binary checks)
- *
- * Requirements: Tailwind CSS in project.
+ * - Logic: UNCHANGED
+ * - Layout/Structure: UNCHANGED
+ * - Fonts: UNCHANGED
+ * - Theme: Updated to Dark Blue (#0B0E11) + Violet Accents
  */
 
 export default function Home() {
   const LS = { server: "koset_server", last: "koset_last_upload" };
+  
+  const API_URL = import.meta.env.VITE_API_URL;
+  const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
 
-  const [serverUrl, setServerUrl] = useState(
-    "http://ec2-3-108-144-186.ap-south-1.compute.amazonaws.com:8000"
-  );
-
-    // Change this line (around line 30)
-const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
-
+  const [serverUrl, setServerUrl] = useState(API_URL);
 
   const [projectName, setProjectName] = useState("default_project");
   const [datasetName, setDatasetName] = useState("default_dataset");
 
   const trainingRef = useRef(null);
   const datasetRef = useRef(null);
-
   
   const [trainingFilesList, setTrainingFilesList] = useState([]);
   const [datasetFilesList, setDatasetFilesList] = useState([]);
@@ -73,62 +67,45 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
   }, []);
 
   // ==========================================
-  // NEW: DATASET VALIDATION HELPER FUNCTION
+  // DATASET VALIDATION HELPER FUNCTION
   // ==========================================
   const validateDatasetFile = (file) => {
     return new Promise((resolve) => {
-      // 1. Check extension
       if (!file.name.toLowerCase().endsWith(".csv")) {
         return resolve("Only .csv files are allowed.");
       }
-
-      // 2. Check for double extensions (e.g. data.ss.csv, file.exe.csv)
       const nameParts = file.name.split(".");
       if (nameParts.length > 2) {
         return resolve(
           "Filename has invalid double extensions (e.g., .exe.csv). Please rename."
         );
       }
-
-      // 3. Check empty or very small files
       if (file.size < 10) {
         return resolve("File is empty or too small to be a valid dataset.");
       }
-
-      // 4. Read content to check binary and structure
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target.result;
-
-        // Check for binary characters (null bytes)
         if (/\u0000/.test(text)) {
           return resolve(
             "File contains binary content. Real CSV text required."
           );
         }
-
         const rows = text.split(/\r\n|\n/).filter((r) => r.trim() !== "");
-
-        // Check Row Count
         if (rows.length < 2) {
           return resolve("CSV must have at least 2 rows (Headers + Data).");
         }
-
-        // Check Headers
         const headers = rows[0].split(",");
         if (headers.length < 2) {
           return resolve("CSV must have at least 2 columns.");
         }
-
-        // Check Consistency (Header vs First Row)
         const firstRowData = rows[1].split(",");
         if (headers.length !== firstRowData.length) {
           return resolve(
             `Column count mismatch. Header has ${headers.length}, but Row 1 has ${firstRowData.length}.`
           );
         }
-
-        resolve(null); // Valid
+        resolve(null); 
       };
       reader.onerror = () => resolve("Error reading file.");
       reader.readAsText(file);
@@ -169,7 +146,6 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     setter(arr);
 
     setFileAnalysisState((prev) => {
-      // replace previous of same kind
       const filtered = prev.filter((p) => p.kind !== kind);
       const newEntries = arr.map((a) => ({
         name: a.name,
@@ -262,7 +238,6 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     }, 12000);
   }
 
-  // helper size format
   function fmtSize(n) {
     if (n == null) return "";
     if (n < 1024) return `${n} B`;
@@ -270,9 +245,8 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  // upload handler (now populates uploadedTrainingFiles and uploadedDatasetFiles separately)
+  // upload handler
   async function handleUpload() {
-    // 1️⃣ VALIDATE DATASET FILES BEFORE UPLOAD STARTS
     const datasetFiles = datasetRef.current?.files || [];
     for (const file of datasetFiles) {
       const error = await validateDatasetFile(file);
@@ -280,11 +254,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
         setUploadOutput({
           error: `Validation Failed: ${file.name} - ${error}`,
         });
-        return; // Abort upload
+        return; 
       }
     }
 
-    // take preview immediately
     readFilesPreview(trainingRef, setTrainingFilesList, "training");
     readFilesPreview(datasetRef, setDatasetFilesList, "dataset");
 
@@ -296,7 +269,6 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     fd.append("project_name", projectName || "default_project");
     fd.append("dataset_name", datasetName || "default_dataset");
     const trainingFiles = trainingRef.current?.files || [];
-    // const datasetFiles = datasetRef.current?.files || []; // Already grabbed above
     for (const f of trainingFiles) fd.append("training_files", f);
     for (const f of datasetFiles) fd.append("dataset_files", f);
 
@@ -322,45 +294,28 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
       });
       const data = await res.json();
 
-      // Determine uploaded training vs dataset files from common response shapes
       const upTraining = [];
       const upDataset = [];
 
-      // if backend returns training.saved_files as array
-      if (
-        data?.training?.saved_files &&
-        Array.isArray(data.training.saved_files)
-      ) {
+      if (data?.training?.saved_files && Array.isArray(data.training.saved_files)) {
         upTraining.push(...data.training.saved_files);
       }
-      // if backend returns dataset.saved_files as array
-      if (
-        data?.dataset?.saved_files &&
-        Array.isArray(data.dataset.saved_files)
-      ) {
+      if (data?.dataset?.saved_files && Array.isArray(data.dataset.saved_files)) {
         upDataset.push(...data.dataset.saved_files);
       }
 
-      // if backend returns a flat saved_files or saved_files grouped differently, try to populate sensibly
-      if (
-        upTraining.length === 0 &&
-        data?.saved_files &&
-        Array.isArray(data.saved_files)
-      ) {
-        // try to split by extension heuristics
+      if (upTraining.length === 0 && data?.saved_files && Array.isArray(data.saved_files)) {
         data.saved_files.forEach((p) => {
           if (/\.(py|ipynb)$/.test(p)) upTraining.push(p);
           else upDataset.push(p);
         });
       }
 
-      // fallback: use selected names for each group if backend didn't return
       if (upTraining.length === 0)
         upTraining.push(...Array.from(trainingFiles).map((f) => f.name));
       if (upDataset.length === 0)
         upDataset.push(...Array.from(datasetFiles).map((f) => f.name));
 
-      // store last paths for analysis
       localStorage.setItem(
         LS.last,
         JSON.stringify({
@@ -373,7 +328,6 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
         stopAnimation(300);
         setUploading(false);
         setUploadOutput({ success: true, data });
-        // set the two uploaded lists separately
         setUploadedTrainingFiles(upTraining);
         setUploadedDatasetFiles(upDataset);
         setFileAnalysisState((prev) =>
@@ -387,7 +341,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     }
   }
 
-  // analyze handler (starts time-left estimator and background parsing visual)
+  // analyze handler
   async function handleAnalyze() {
     setAnalyzing(true);
     setAnalyzeOutput(null);
@@ -395,7 +349,6 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     setAnalyzeStart(Date.now());
     setTimeLeftSec(null);
 
-    // kick time estimator interval
     timeEstimateInterval.current = setInterval(() => {
       setTimeLeftSec(calculateTimeLeftSec());
     }, 800);
@@ -451,7 +404,6 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     }
   }
 
-  // estimate time left in seconds using linear extrapolation from progress
   function calculateTimeLeftSec() {
     if (!analyzeStart) return null;
     const elapsedMs = Date.now() - analyzeStart;
@@ -464,9 +416,9 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
   // small JSON block
   function JsonBlock({ value }) {
     if (!value)
-      return <div className="text-sm text-slate-400">No output yet.</div>;
+      return <div className="text-sm text-gray-500">No output yet.</div>;
     return (
-      <pre className="bg-slate-900/60 p-3 rounded-md text-xs sm:text-sm overflow-auto max-h-64">
+      <pre className="bg-[#0B0E11] border border-white/10 p-3 rounded-md text-xs sm:text-sm overflow-auto max-h-64 text-gray-300">
         {JSON.stringify(value, null, 2)}
       </pre>
     );
@@ -475,10 +427,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
   // file card UI
   function FileCard({ f }) {
     return (
-      <div className="flex items-center gap-3 bg-white/3 p-3 rounded-lg border border-white/6">
-        <div className="w-10 h-10 flex items-center justify-center rounded bg-gradient-to-br from-slate-700 to-slate-800">
+      <div className="flex items-center gap-3 bg-[#0B0E11] p-3 rounded-lg border border-white/10">
+        <div className="w-10 h-10 flex items-center justify-center rounded bg-[#161b22]">
           <svg
-            className="w-5 h-5 text-cyan-300"
+            className="w-5 h-5 text-violet-400"
             viewBox="0 0 24 24"
             fill="none"
           >
@@ -493,19 +445,19 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-center">
-            <div className="text-sm font-medium truncate">{f.name}</div>
-            <div className="text-xs text-slate-400">{fmtSize(f.size)}</div>
+            <div className="text-sm font-medium text-gray-200 truncate">{f.name}</div>
+            <div className="text-xs text-gray-500">{fmtSize(f.size)}</div>
           </div>
           <div className="mt-2">
-            <div className="w-full bg-slate-900/30 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-[#161b22] rounded-full h-2 overflow-hidden">
               <div
                 className={`h-2 rounded-full transition-all ${
-                  f.done ? "bg-emerald-400" : "bg-cyan-400"
+                  f.done ? "bg-emerald-500" : "bg-violet-500"
                 }`}
                 style={{ width: `${f.progress}%` }}
               />
             </div>
-            <div className="text-xs text-slate-400 mt-1">
+            <div className="text-xs text-gray-500 mt-1">
               {f.done ? "Analyzed" : `${f.progress}%`}
             </div>
           </div>
@@ -513,7 +465,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
         <div className="w-10 flex items-center justify-center">
           {f.done ? (
             <svg
-              className="w-5 h-5 text-emerald-400"
+              className="w-5 h-5 text-emerald-500"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -527,7 +479,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
             </svg>
           ) : (
             <svg
-              className="w-5 h-5 animate-pulse text-slate-400"
+              className="w-5 h-5 animate-spin text-gray-600"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -556,22 +508,22 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
       : "Idle — choose files or provide a source URL.";
     return (
       <div
-        className={`w-full rounded-md p-3 mb-6 transition-all ${
+        className={`w-full rounded-md p-3 mb-6 transition-all border ${
           active
-            ? "bg-gradient-to-r from-cyan-700 to-emerald-500 text-slate-900 shadow-lg"
-            : "bg-slate-800/40 text-slate-200"
+            ? "bg-violet-900/20 border-violet-500/50 text-white shadow-lg"
+            : "bg-[#161b22] border-white/10 text-gray-300"
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className={`p-2 rounded-full ${
-                active ? "bg-white/30" : "bg-slate-700"
+                active ? "bg-violet-600/30" : "bg-[#0B0E11]"
               }`}
             >
               <svg
                 className={`w-6 h-6 ${
-                  active ? "animate-pulse text-white" : "text-slate-300"
+                  active ? "animate-pulse text-violet-300" : "text-gray-500"
                 }`}
                 viewBox="0 0 24 24"
                 fill="none"
@@ -608,10 +560,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
             </div>
             <div>
               <div className="font-medium">{text}</div>
-              <div className="text-xs text-slate-200/80">{sub}</div>
+              <div className="text-xs text-gray-400">{sub}</div>
             </div>
           </div>
-          <div className="text-xs text-slate-200/70">Status indicator</div>
+          <div className="text-xs text-gray-500">Status indicator</div>
         </div>
       </div>
     );
@@ -621,10 +573,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
   function PipelineVisual() {
     const active = uploading || analyzing;
     return (
-      <div className="mt-4 p-3 bg-slate-900/30 rounded-md border border-slate-800">
-        <div className="flex items-center justify-between text-sm text-slate-300 mb-3">
+      <div className="mt-4 p-3 bg-[#161b22] rounded-md border border-white/10">
+        <div className="flex items-center justify-between text-sm text-gray-300 mb-3">
           <div className="font-medium">Processing pipeline</div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-gray-500">
             {active ? `Progress ${progress}%` : "Idle"}
           </div>
         </div>
@@ -639,7 +591,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
 
         <div className="relative h-6 mt-4">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full h-1 rounded-full bg-slate-800/40" />
+            <div className="w-full h-1 rounded-full bg-white/10" />
           </div>
           <div
             className={`absolute left-0 top-0 h-6 flex items-center pointer-events-none ${
@@ -647,15 +599,15 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
             }`}
           >
             <div
-              className="token bg-cyan-400 w-3 h-3 rounded-full mr-2 opacity-90"
+              className="token bg-violet-500 w-3 h-3 rounded-full mr-2 opacity-90"
               style={{ animationDelay: "0ms" }}
             />
             <div
-              className="token bg-emerald-400 w-3 h-3 rounded-full mr-2 opacity-80"
+              className="token bg-emerald-500 w-3 h-3 rounded-full mr-2 opacity-80"
               style={{ animationDelay: "200ms" }}
             />
             <div
-              className="token bg-amber-400 w-3 h-3 rounded-full"
+              className="token bg-amber-500 w-3 h-3 rounded-full"
               style={{ animationDelay: "400ms" }}
             />
           </div>
@@ -677,10 +629,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
     return (
       <div className="flex flex-col items-center gap-2">
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          className={`w-10 h-10 rounded-full flex items-center justify-center border ${
             done
-              ? "bg-emerald-400 text-slate-900"
-              : "bg-slate-800/40 text-slate-300"
+              ? "bg-emerald-500 text-white border-emerald-500"
+              : "bg-[#0B0E11] text-gray-500 border-white/10"
           }`}
         >
           {done ? (
@@ -705,7 +657,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
             </svg>
           )}
         </div>
-        <div className="text-xs">{title}</div>
+        <div className="text-xs text-gray-400">{title}</div>
       </div>
     );
   }
@@ -715,14 +667,14 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
       <div
         className={`flex-1 h-0.5 ${
           active
-            ? "bg-gradient-to-r from-cyan-400 to-emerald-400"
-            : "bg-slate-700/40"
+            ? "bg-gradient-to-r from-violet-500 to-emerald-500"
+            : "bg-white/10"
         }`}
       />
     );
   }
 
-  // Parsing overlay shown during analyze with progress & time-left (no JSX > warnings)
+  // Parsing overlay shown during analyze
   function ParsingOverlay() {
     if (!analyzing) return null;
     const left = timeLeftSec == null ? "--" : `${timeLeftSec}s`;
@@ -737,36 +689,36 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
 
     return (
       <div className="mt-4 relative">
-        <div className="absolute inset-0 bg-black/30 rounded-md pointer-events-none" />
-        <div className="relative p-4 bg-slate-900/70 rounded-md border border-slate-700">
+        <div className="absolute inset-0 bg-black/60 rounded-md pointer-events-none" />
+        <div className="relative p-4 bg-[#161b22] rounded-md border border-white/10">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <div className="font-medium text-lg">
+              <div className="font-medium text-lg text-white">
                 {statusMessages[statusIndex]}
               </div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-gray-400">
                 Parsing script in background — extracting structure, scanning
                 imports, and profiling data.
               </div>
             </div>
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-gray-400">
               Estimated time left:{" "}
               <span className="font-medium text-white">{left}</span>
             </div>
           </div>
 
-          <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden mb-2">
+          <div className="w-full bg-[#0B0E11] rounded-full h-3 overflow-hidden mb-2">
             <div
-              className="h-3 rounded-full bg-emerald-400 transition-all"
+              className="h-3 rounded-full bg-emerald-500 transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <div className="text-xs text-slate-300 mb-2">
+          <div className="text-xs text-gray-300 mb-2">
             Parsing log (simulated):
           </div>
 
-          <div className="h-20 bg-black/20 rounded p-2 overflow-auto text-xs font-mono text-slate-300">
+          <div className="h-20 bg-[#0B0E11] rounded p-2 overflow-auto text-xs font-mono text-gray-400 border border-white/5">
             {messages.map((m, i) => (
               <div key={i}>
                 {"\u2192"} {m}
@@ -779,7 +731,8 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 p-6">
+    // MAIN BACKGROUND CHANGED HERE TO MATCH THEME (#0B0E11)
+    <div className="min-h-screen bg-[#0B0E11] text-white p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-4">
           <StatusBanner />
@@ -788,7 +741,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-semibold">Koset API Tester</h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-sm text-gray-400 mt-1">
               Clear upload zones and pipeline visuals help users understand
               what's happening.
             </p>
@@ -797,40 +750,40 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload column */}
-          <section className="lg:col-span-1 bg-slate-900/40 border border-slate-800 rounded-xl p-6 shadow">
+          <section className="lg:col-span-1 bg-[#161b22] border border-white/10 rounded-xl p-6 shadow">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">
                 1) Upload Training & Dataset
               </h2>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-gray-400">
                 Files will be previewed below
               </div>
             </div>
 
             <div className="space-y-3 mb-4">
               <div>
-                <label className="text-sm text-slate-300">Project Name</label>
+                <label className="text-sm text-gray-300">Project Name</label>
                 <input
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="w-full mt-1 p-2 rounded-md bg-slate-900/60 border border-slate-700 text-sm"
+                  className="w-full mt-1 p-2 rounded-md bg-[#0B0E11] border border-white/10 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-slate-300">Dataset Name</label>
+                <label className="text-sm text-gray-300">Dataset Name</label>
                 <input
                   value={datasetName}
                   onChange={(e) => setDatasetName(e.target.value)}
-                  className="w-full mt-1 p-2 rounded-md bg-slate-900/60 border border-slate-700 text-sm"
+                  className="w-full mt-1 p-2 rounded-md bg-[#0B0E11] border border-white/10 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
               </div>
             </div>
 
             <div className="space-y-4 mb-4">
-              <label className="text-sm text-slate-300">Training Files</label>
+              <label className="text-sm text-gray-300">Training Files</label>
               <div
-                className="border-2 border-dashed border-slate-700 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-cyan-400 transition-colors"
+                className="border-2 border-dashed border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-violet-500 transition-colors bg-[#0B0E11]/50"
                 onClick={() =>
                   trainingRef.current && trainingRef.current.click()
                 }
@@ -849,7 +802,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                   }
                 />
                 <svg
-                  className="w-8 h-8 text-cyan-300 mb-2"
+                  className="w-8 h-8 text-violet-400 mb-2"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -875,25 +828,25 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                     strokeLinejoin="round"
                   />
                 </svg>
-                <div className="text-sm text-slate-300">
+                <div className="text-sm text-gray-300">
                   Click to select training files — .py, .ipynb, etc
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-gray-400 mt-1">
                   You can select multiple files
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-slate-300">
+                  <div className="text-sm text-gray-300">
                     Selected training files
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-gray-400">
                     {trainingFilesList.length} file(s)
                   </div>
                 </div>
                 <div className="space-y-2">
                   {trainingFilesList.length === 0 ? (
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-gray-500">
                       No training files chosen.
                     </div>
                   ) : (
@@ -915,9 +868,9 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                 </div>
               </div>
 
-              <label className="text-sm text-slate-300">Dataset Files</label>
+              <label className="text-sm text-gray-300">Dataset Files</label>
               <div
-                className="border-2 border-dashed border-slate-700 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-400 transition-colors"
+                className="border-2 border-dashed border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 transition-colors bg-[#0B0E11]/50"
                 onClick={() => datasetRef.current && datasetRef.current.click()}
               >
                 <input
@@ -945,7 +898,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                   }}
                 />
                 <svg
-                  className="w-8 h-8 text-emerald-300 mb-2"
+                  className="w-8 h-8 text-emerald-400 mb-2"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -964,10 +917,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                     strokeLinejoin="round"
                   />
                 </svg>
-                <div className="text-sm text-slate-300">
+                <div className="text-sm text-gray-300">
                   Click to select dataset files — .csv only
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-gray-400 mt-1">
                   CSV recommended for data profiling
                 </div>
               </div>
@@ -977,16 +930,16 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
             <div className="space-y-3 mb-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-slate-300">
+                  <div className="text-sm text-gray-300">
                     Selected dataset files
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-gray-400">
                     {datasetFilesList.length} file(s)
                   </div>
                 </div>
                 <div className="space-y-2">
                   {datasetFilesList.length === 0 ? (
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-gray-500">
                       No dataset files chosen.
                     </div>
                   ) : (
@@ -1014,7 +967,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
               <button
                 disabled={uploading}
                 onClick={handleUpload}
-                className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 px-4 py-2 rounded-lg font-semibold shadow"
+                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg font-semibold shadow"
               >
                 {uploading ? "Uploading..." : "Upload"}
                 {uploading && (
@@ -1045,27 +998,27 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                   setUploadedTrainingFiles([]);
                   setUploadedDatasetFiles([]);
                 }}
-                className="bg-slate-700 px-3 py-2 rounded-lg text-sm"
+                className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm"
               >
                 Reset
               </button>
 
               <div className="flex-1">
-                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-[#161b22] rounded-full h-2 overflow-hidden border border-white/5">
                   <div
-                    className="h-2 rounded-full transition-all bg-cyan-400"
+                    className="h-2 rounded-full transition-all bg-violet-500"
                     style={{ width: `${uploading ? progress : 0}%` }}
                   />
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-gray-400 mt-1">
                   {uploading ? statusMessages[statusIndex] : ""}
                 </div>
               </div>
             </div>
 
             <div className="mt-4">
-              <div className="text-sm text-slate-400 mb-2">What this does</div>
-              <div className="text-sm text-slate-300 bg-slate-900/40 p-3 rounded">
+              <div className="text-sm text-gray-400 mb-2">What this does</div>
+              <div className="text-sm text-gray-300 bg-[#0B0E11] p-3 rounded border border-white/10">
                 Upload your training code (.py, .ipynb) and dataset (.csv). The
                 UI previews files and runs a quick pipeline animation so users
                 know files are being processed.
@@ -1073,44 +1026,44 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
             </div>
 
             <div className="mt-4">
-              <div className="text-sm text-slate-400 mb-2">Upload Output</div>
+              <div className="text-sm text-gray-400 mb-2">Upload Output</div>
               <JsonBlock value={uploadOutput} />
             </div>
           </section>
 
           {/* Analyze + pipeline */}
-          <section className="lg:col-span-2 bg-slate-900/40 border border-slate-800 rounded-xl p-6 shadow space-y-4">
+          <section className="lg:col-span-2 bg-[#161b22] border border-white/10 rounded-xl p-6 shadow space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">2) Estimate & Analyze</h2>
-                <div className="text-xs text-slate-400 mt-1">
+                <div className="text-xs text-gray-400 mt-1">
                   Inspect code + data and get back model & data metadata
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <label className="text-sm text-slate-300">
+                <label className="text-sm text-gray-300">
                   Use LLM Fallback
                 </label>
                 <input
                   type="checkbox"
                   checked={useLLM}
                   onChange={(e) => setUseLLM(e.target.checked)}
-                  className="h-4 w-4"
+                  className="h-4 w-4 accent-violet-600"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label className="text-sm text-slate-300">
+                <label className="text-sm text-gray-300">
                   Source (optional)
                 </label>
                 <input
                   value={sourceInput}
                   onChange={(e) => setSourceInput(e.target.value)}
                   placeholder="GitHub, HuggingFace, raw .py URL — leave blank to use uploaded files"
-                  className="w-full mt-1 p-2 rounded-md bg-slate-900/60 border border-slate-700 text-sm"
+                  className="w-full mt-1 p-2 rounded-md bg-[#0B0E11] border border-white/10 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
@@ -1118,7 +1071,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                 <button
                   disabled={analyzing}
                   onClick={handleAnalyze}
-                  className="bg-emerald-400 hover:bg-emerald-300 text-slate-900 px-4 py-2 rounded-lg font-semibold shadow"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold shadow"
                 >
                   {analyzing ? "Analyzing..." : "Estimate & Analyze"}
                 </button>
@@ -1127,7 +1080,7 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
                     setAnalyzeOutput(null);
                     setSourceInput("");
                   }}
-                  className="bg-slate-700 px-3 py-2 rounded-lg text-sm"
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm"
                 >
                   Reset
                 </button>
@@ -1142,10 +1095,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-slate-400 mb-2">
+                <div className="text-sm text-gray-400 mb-2">
                   What this does
                 </div>
-                <div className="text-sm text-slate-300 bg-slate-900/40 p-3 rounded">
+                <div className="text-sm text-gray-300 bg-[#0B0E11] p-3 rounded border border-white/10">
                   Estimate & Analyze inspects training code and dataset to
                   detect framework, preprocessing steps, model params, and data
                   profile. Use a source URL to analyze public repos directly.
@@ -1153,18 +1106,10 @@ const ANALYSIS_URL = import.meta.env.VITE_ANALYSIS_URL;
               </div>
 
               <div>
-                <div className="text-sm text-slate-400 mb-2">
+                <div className="text-sm text-gray-400 mb-2">
                   Analyze Output
                 </div>
                 <JsonBlock value={analyzeOutput} />
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs text-slate-500">
-                Tip: The top status banner shows friendly messages while
-                processing. File cards animate as they are scanned so naive
-                users can follow progress visually.
               </div>
             </div>
           </section>

@@ -1,5 +1,3 @@
-// === C:\Users\Asus\code\Koset Console\client\src\pages\Login.jsx ===
-
 import React, { useState } from "react";
 import { post, endpoints } from "../api.js";
 import { Link } from "react-router-dom";
@@ -55,81 +53,91 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0B1020] via-[#1B1540] to-[#0E1324] pt-16 px-4">
-      <div className="w-full max-w-xl mx-auto py-10">
-        <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl shadow-xl p-8">
-          <h2 className="text-4xl font-extrabold text-white text-center">
-            Welcome back
-          </h2>
-          <p className="text-center text-violet-200 mt-2">
-            Login to continue to the Koset Console.
-          </p>
+    // ✅ CONSISTENCY FIX: Background set to #0B0E11 to match Landing Page
+    <div className="min-h-screen bg-[#0B0E11] text-white pt-24 px-4 flex flex-col items-center">
+      <div className="w-full max-w-xl">
+        {/* ✅ LAYOUT FIX: Consistent card styling with Signup page */}
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-10">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Welcome back
+            </h2>
+            <p className="text-gray-400 mt-3">
+              Login to continue to the Koset Console.
+            </p>
+          </div>
 
           {/* Conditional Error Display */}
           {errorMessage && (
-            <div className="mt-6 bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-3 rounded-xl text-sm text-center">
+            <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm text-center">
                {errorMessage}
             </div>
           )}
 
+          {/* Google Login Section */}
           <button
             onClick={googleLogin}
-            className="mt-8 w-full flex items-center justify-center gap-3 bg-white text-gray-900 rounded-xl px-4 py-3 hover:bg-gray-100 transition duration-200 shadow"
+            className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 rounded-xl px-4 py-3 font-semibold hover:bg-gray-100 transition duration-200 shadow-sm"
           >
             <img
               src="https://www.svgrepo.com/show/475656/google-color.svg"
               alt="Google"
-              className="w-6 h-6"
+              className="w-5 h-5"
             />
-            <span className="font-semibold">Continue with Google</span>
+            Continue with Google
           </button>
 
-          <div className="flex items-center my-6">
-            <div className="flex-1 h-px bg-white/20"></div>
-            <span className="px-4 text-sm text-white/70 uppercase">or</span>
-            <div className="flex-1 h-px bg-white/20"></div>
+          <div className="flex items-center my-8">
+            <div className="flex-1 h-px bg-white/10"></div>
+            <span className="px-4 text-xs text-gray-500 uppercase tracking-widest">or</span>
+            <div className="flex-1 h-px bg-white/10"></div>
           </div>
 
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <label className="text-sm font-medium text-white/80 mb-1 block">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@gmail.com"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-violet-500"
-            />
+          {/* Manual Email Flow */}
+          <div className="space-y-6">
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50 transition"
+              />
+            </div>
+
+            <button
+              disabled={sending}
+              onClick={sendOtp}
+              className={`w-full py-3.5 rounded-xl text-white font-bold transition shadow-xl
+              ${
+                sending
+                  ? "bg-violet-600/50 cursor-not-allowed"
+                  : "bg-violet-600 hover:bg-violet-500 shadow-violet-500/10"
+              }`}
+            >
+              {sending ? "Sending OTP..." : "Send OTP"}
+            </button>
           </div>
 
-          <button
-            disabled={sending}
-            onClick={sendOtp}
-            className={`mt-6 w-full py-3 rounded-xl text-white font-semibold transition shadow-lg
-            ${
-              sending
-                ? "bg-white/30 cursor-not-allowed"
-                : "bg-gradient-to-r from-[#6D28D9] via-[#9333EA] to-[#22D3EE] hover:opacity-95"
-            }`}
-          >
-            {sending ? "Sending OTP..." : "Send OTP"}
-          </button>
-
+          {/* Error Display for Manual Flow */}
           {error && (
-            <div className="text-red-200 text-sm mt-4 text-center bg-red-500/20 p-3 rounded-lg border border-red-400/30">
+            <div className="mt-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
               {error}
             </div>
           )}
         </div>
 
-        <p className="text-center mt-6 text-white/80">
+        {/* Footer Link */}
+        <p className="text-center mt-8 text-gray-500 text-sm">
           Don&apos;t have an account?{" "}
           <Link
             to="/signup"
-            className="font-semibold text-cyan-300 hover:underline"
+            className="font-bold text-violet-400 hover:text-violet-300 transition"
           >
-            Sign up
+            Sign up here
           </Link>
         </p>
       </div>

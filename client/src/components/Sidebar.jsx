@@ -82,7 +82,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     bg-[#0B0E11] border-r border-gray-800
     text-gray-300 transition-all duration-300
     overflow-y-auto overscroll-contain
-    hide-scrollbar mt-2
+    hide-scrollbar mt-
     ${collapsed ? "w-16" : "w-64"}
   `}
 >

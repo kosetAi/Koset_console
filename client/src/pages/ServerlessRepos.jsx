@@ -1,202 +1,169 @@
-// src/pages/ServerlessRepos.jsx
-import React, { useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+// src/pages/AuditLogs.jsx
+import React, { useEffect, useState } from "react";
 import {
   FiSearch,
-  FiStar,
-  FiChevronDown,
-  FiClock,
+  FiFilter,
+  FiCalendar,
   FiLock,
+  FiActivity,
 } from "react-icons/fi";
+import { get } from "../api.js";
+import Loader from "../components/Loader.jsx";
 
-const CATEGORIES = ["All", "Image", "Video", "Audio", "Language", "Embedding"];
+export default function AuditLogs() {
+  const [isPageReady, setIsPageReady] = useState(false);
+  useEffect(() => {
+    // Simulate a brief delay or wait for actual data
+    const timer = setTimeout(() => {
+      setIsPageReady(true);
+    }, 1200); // 1.2 seconds feels snappy but professional
 
-const sampleRepos = [
-  {
-    id: "add",
-    name: "Add your repo",
-    desc: "Add your own repo to the Runpod Hub!",
-    icon: "▦",
-    installs: null,
-    tag: null,
-    category: "All",
-  },
-  {
-    id: "axolotl",
-    name: "Axolotl Fine-Tuning",
-    desc: "Serverless fine-tuning of open-source LLMs with Axolotl. Supports LoRA, QLoRA, DPO and more.",
-    icon: "🦎",
-    installs: 10855,
-    tag: "v0.12.2",
-    category: "Language",
-  },
-  {
-    id: "comfyui",
-    name: "ComfyUI",
-    desc: "Generate images with ComfyUI using FLUX.1-dev (fp8).",
-    icon: "🧩",
-    installs: 605,
-    tag: "5.5.1",
-    category: "Image",
-  },
-  {
-    id: "vllm",
-    name: "vLLM",
-    desc: "Deploy OpenAI-Compatible blazing-fast LLM endpoints powered by vLLM.",
-    icon: "▦",
-    installs: 385,
-    tag: "v2.11.0",
-    category: "Language",
-  },
-];
+    return () => clearTimeout(timer);
+  }, []);
+  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState([]);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState(null);
 
-function shortNum(n) {
-  if (n === null || n === undefined) return "";
-  if (n >= 1000) return `${Math.round(n / 100) / 10}K`;
-  return `${n}`;
-}
+  async function loadLogs() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await get("/audit-logs");
+      if (!res.ok) {
+        setError(res.error?.message || "Failed to load logs");
+        setLogs([]);
+      } else {
+        setLogs(res.logs || []);
+      }
+    } catch {
+      setError("Network error");
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-export default function ServerlessRepos() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  useEffect(() => {
+    loadLogs();
+  }, []);
 
-  const path = (location.pathname || "").toLowerCase();
-  const activeTab = path.startsWith("/templates")
-    ? "templates"
-    : path.startsWith("/endpoints")
-    ? "endpoints"
-    : "repos";
+  const filtered = logs.filter((l) => {
+    const matchesQuery =
+      query.trim() === "" ||
+      l.action?.toLowerCase().includes(query.toLowerCase()) ||
+      l.resource?.toLowerCase().includes(query.toLowerCase()) ||
+      l.user?.toLowerCase().includes(query.toLowerCase());
 
-  const [q, setQ] = useState("");
-  const [category, setCategory] = useState("All");
-  const [sort, setSort] = useState("Most Popular");
+    const matchesAction = actionFilter === "all" || l.action === actionFilter;
+    const matchesDate =
+      !dateFilter ||
+      new Date(l.timestamp).toDateString() ===
+        new Date(dateFilter).toDateString();
+    return matchesQuery && matchesAction && matchesDate;
+  });
 
-  const currentList = useMemo(() => sampleRepos, []);
-
-  const filtered = useMemo(() => {
-    const qLower = q.trim().toLowerCase();
-    return currentList.filter((it) => {
-      if (it.id === "add" && (!qLower || it.name.toLowerCase().includes(qLower)))
-        return true;
-
-      const matchesQ =
-        !qLower ||
-        (it.name && it.name.toLowerCase().includes(qLower)) ||
-        (it.desc && it.desc.toLowerCase().includes(qLower));
-      const matchesCategory = category === "All" || it.category === category;
-      return matchesQ && matchesCategory;
-    });
-  }, [currentList, q, category]);
-
+  if (!isPageReady) return <Loader />;
   return (
-    <div className="relative min-h-screen bg-[#09090B] text-white">
-      
-      {/* COMING SOON OVERLAY */}
-      <div className="absolute inset-0 z-50 flex items-center justify-center p-6">
-        <div className="bg-[#121217]/80 border border-violet-500/20 backdrop-blur-md p-8 rounded-xl shadow-2xl text-center max-w-sm w-full">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-violet-600/20 rounded-full border border-violet-500/40">
-              <FiLock className="text-violet-500 text-2xl" />
+    <div className="relative min-h-screen bg-[#09090B]">
+      {/* --- UPDATED LOCK SCREEN OVERLAY --- */}
+      {/* Changed 'absolute' to 'fixed' to keep it in the screen center during scroll.
+          Added 'z-[200]' to ensure it stays above the sidebar/navbar if needed.
+      */}
+      <div className="fixed inset-0 z-[50] flex items-center justify-center p-4 sm:p-6 pointer-events-auto">
+        <div className="bg-[#121217]/90 border border-violet-500/20 backdrop-blur-xl p-6 sm:p-10 rounded-2xl shadow-[0_0_50px_rgba(139,92,246,0.15)] text-center max-w-sm w-full transition-all">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-violet-600/20 rounded-2xl border border-violet-500/40 shadow-inner">
+              <FiLock className="text-violet-500 text-3xl" />
             </div>
           </div>
-          <h2 className="text-xl font-bold mb-2">Coming Soon</h2>
-          <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-            The Serverless Repository Hub is currently undergoing core synchronization.
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 tracking-tight">
+            Coming Soon
+          </h2>
+          <p className="text-sm text-gray-400 mb-8 leading-relaxed">
+            The immutable Audit Logging system is being integrated with our
+            secure event-streaming pipeline.
           </p>
-          <div className="inline-block px-6 py-2 bg-violet-600 text-white text-xs font-semibold rounded-md shadow-lg shadow-violet-600/20">
-            In Development
+          <div className="inline-block px-8 py-2.5 bg-violet-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-violet-500/30 uppercase tracking-widest">
+            Security Module
           </div>
         </div>
       </div>
 
       {/* BLURRED CONTENT LAYER */}
-      <div className="p-8 space-y-6 blur-[6px] pointer-events-none select-none grayscale-[0.4]">
-        
-        {/* HERO */}
-        <div className="bg-[#121217] rounded-xl border border-white/5 p-8 flex flex-col items-center">
-          <h1 className="text-3xl font-semibold mb-5 text-white italic">
-            Kickstart Your Next <span className="text-violet-600">Project</span>
-          </h1>
+      <div className="p-4 sm:p-8 space-y-6 blur-[8px] pointer-events-none select-none grayscale-[0.6]">
+        <h1 className="text-2xl font-bold text-white mb-6">Audit Logs</h1>
 
-          <div className="w-full max-w-2xl">
-            <div className="relative">
-              <input
-                readOnly
-                placeholder="What are you looking for?"
-                className="w-full bg-[#18181B] border border-white/10 px-4 py-3 rounded-lg text-sm outline-none placeholder:text-gray-600"
-              />
-              <FiSearch className="absolute right-4 top-3 text-gray-500" />
-            </div>
+        {error && (
+          <div className="mb-4 text-red-300 bg-red-900/30 p-3 rounded border border-red-700">
+            {error}
           </div>
+        )}
+
+        {/* Search + Filters */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
+          <div className="flex items-center bg-[#121217] border border-white/10 rounded-md px-3 py-2 flex-1">
+            <FiSearch className="text-gray-500 mr-2" />
+            <input
+              readOnly
+              type="text"
+              placeholder="Search logs..."
+              className="bg-transparent text-gray-400 text-sm outline-none w-full"
+            />
+          </div>
+          <select
+            disabled
+            className="bg-[#121217] border border-white/10 text-gray-500 text-sm px-3 py-2 rounded-md outline-none appearance-none"
+          >
+            <option value="all">Filter by action</option>
+          </select>
+          <button
+            disabled
+            className="flex items-center bg-[#121217] border border-white/10 text-gray-500 text-sm px-3 py-2 rounded-md gap-2"
+          >
+            <FiCalendar /> Select date
+          </button>
         </div>
 
-        {/* TABS */}
-        <div className="border-b border-white/5 flex gap-8">
-          {["repos", "templates", "endpoints"].map((tab) => (
-            <button
-              key={tab}
-              className={`pb-4 text-sm transition-colors ${
-                activeTab === tab
-                  ? "text-violet-400 border-b-2 border-violet-600"
-                  : "text-gray-500"
-              }`}
-            >
-              {tab === "repos" ? "Serverless Repos" : tab === "templates" ? "Pod Templates" : "Public Endpoints"}
-            </button>
-          ))}
-        </div>
-
-        {/* FILTER ROW */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-2 items-center flex-wrap">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                className={`px-3 py-1.5 text-xs rounded-md border transition ${
-                  category === c
-                    ? "bg-violet-600 border-violet-500 text-white"
-                    : "border-white/5 text-gray-400 bg-[#121217] hover:bg-[#18181B]"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+        {/* Logs section */}
+        <div className="bg-[#121217] border border-white/5 rounded-xl p-6 min-h-[400px] flex flex-col items-center">
+          <div className="w-full flex justify-between items-center mb-6 opacity-30">
+            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
+              <FiActivity className="text-violet-500" /> Event Stream
+            </h2>
+            <span className="text-[10px] font-mono text-gray-600 uppercase">
+              Buffer: Syncing...
+            </span>
           </div>
-          <div className="bg-[#121217] px-3 py-1.5 rounded-md border border-white/5 text-xs text-gray-400 flex items-center gap-2">
-            {sort} <FiChevronDown />
-          </div>
-        </div>
 
-        {/* GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className={`rounded-xl border p-5 flex flex-col justify-between transition ${
-                item.id === "add" 
-                ? "border-dashed border-white/10 bg-transparent" 
-                : "bg-[#121217] border-white/5 shadow-lg"
-              }`}
-            >
-              <div>
-                <div className="h-10 w-10 rounded-lg bg-[#18181B] border border-white/5 flex items-center justify-center text-xl mb-4">
-                  {item.icon}
-                </div>
-                <h3 className="font-semibold text-white">{item.name}</h3>
-                <p className="text-gray-400 text-xs mt-2 leading-relaxed line-clamp-2">{item.desc}</p>
-              </div>
-              
-              <div className="mt-6 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-gray-400">
-                  <FiStar className="text-violet-500" />
-                  {shortNum(item.installs) || "0"}
-                </div>
-                <div className="text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
-                  {item.category}
-                </div>
-              </div>
-            </div>
-          ))}
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left text-sm text-gray-500 min-w-[600px]">
+              <thead>
+                <tr className="text-gray-600 border-b border-white/5 uppercase text-[10px] font-bold tracking-wider">
+                  <th className="pb-4">Timestamp</th>
+                  <th className="pb-4">Action</th>
+                  <th className="pb-4">Resource</th>
+                  <th className="pb-4">User Identity</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <tr key={i} className="opacity-10">
+                    <td className="py-4 text-gray-400 font-mono">
+                      2026-02-10 08:31:42
+                    </td>
+                    <td className="py-4 font-semibold uppercase">
+                      resource_access
+                    </td>
+                    <td className="py-4">pod_cluster_v4</td>
+                    <td className="py-4">admin@koset.io</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

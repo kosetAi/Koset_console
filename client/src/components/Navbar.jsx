@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { FiMenu } from "react-icons/fi";
 
-export default function Navbar() {
+export default function Navbar({ onMenuClick }) {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handler = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -18,38 +18,46 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const displayName =
-    user?.name || user?.email?.split("@")[0] || user?.phone || "User";
+  const displayName = user?.name || user?.email?.split("@")[0] || user?.phone || "User";
 
   return (
-    <header className="fixed top-0 left-0 w-full z-100 transition-all duration-300">
-      {/* THEME UPDATE: 
-          Using bg-[#09090B]/90 for deep black with high transparency.
-          Added border-white/5 for that razor-thin modern look.
-      */}
+    <header className="fixed top-0 left-0 w-full z-[100] transition-all duration-300">
       <nav className="w-full backdrop-blur-xl bg-[#09090B]/90 border-b border-white/5">
-        <div className="container mx-auto px-6 py-2 flex items-center justify-between">
-          {/* Logo Section */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-               <img
-                src="/logo.jpeg"
-                alt="Koset Logo"
-                className="h-9 w-9 rounded-lg shadow-2xl border border-white/10 group-hover:border-violet-500/50 transition-all"
-              />
-              <div className="absolute inset-0 rounded-lg bg-violet-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="text-[18px] font-bold text-white tracking-tight group-hover:text-violet-400 transition-colors">
-              Koset<span className="text-violet-500">.</span>io
-            </span>
-          </Link>
+        <div className="container mx-auto px-4 lg:px-6 py-2 flex items-center justify-between">
+          
+          {/* Logo Section + Mobile Toggle */}
+          <div className="flex items-center gap-2 lg:gap-3">
+            {user && (
+              <button 
+                onClick={onMenuClick}
+                className="p-2 -ml-2 text-gray-400 hover:text-white lg:hidden transition-colors"
+                aria-label="Open Menu"
+              >
+                <FiMenu size={22} />
+              </button>
+            )}
+            
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="relative">
+                <img
+                  src="/logo.jpeg"
+                  alt="Koset Logo"
+                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg shadow-2xl border border-white/10 group-hover:border-violet-500/50 transition-all"
+                />
+                <div className="absolute inset-0 rounded-lg bg-violet-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <span className="text-[16px] sm:text-[18px] font-bold text-white tracking-tight group-hover:text-violet-400 transition-colors">
+                Koset<span className="text-violet-500">.</span>io
+              </span>
+            </Link>
+          </div>
 
-          {/* Profile Section (Only visible when logged in) */}
+          {/* Profile Section */}
           {user && (
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className={`flex items-center gap-3 px-2 py-1.5 rounded-xl transition-all duration-200 border ${
+                className={`flex items-center gap-2 sm:gap-3 px-2 py-1.5 rounded-xl transition-all duration-200 border ${
                   menuOpen ? "bg-white/10 border-white/10" : "bg-transparent border-transparent hover:bg-white/5"
                 }`}
               >
@@ -57,11 +65,11 @@ export default function Navbar() {
                   <img
                     src={user.avatarUrl}
                     alt={displayName}
-                    className="h-8 w-8 rounded-full border border-white/20 object-cover shadow-inner"
+                    className="h-7 w-7 sm:h-8 sm:h-8 rounded-full border border-white/20 object-cover shadow-inner"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center text-xs font-bold border border-white/10">
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center text-[10px] font-bold border border-white/10">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -78,7 +86,6 @@ export default function Navbar() {
 
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-[#121217] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 animate-in fade-in zoom-in slide-in-from-top-2 duration-200">
-                  {/* User Info Header */}
                   <div className="px-4 py-4 border-b border-white/5 mb-1 bg-white/[0.02] rounded-t-xl">
                     <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.1em]">Identity</p>
                     <p className="text-xs text-violet-400 font-mono mt-1 break-all bg-violet-500/5 px-2 py-1 rounded border border-violet-500/10">

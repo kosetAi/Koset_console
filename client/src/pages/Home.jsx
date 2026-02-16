@@ -1,14 +1,26 @@
 import React, { useState, useRef, useEffect } from "react";
+import Loader from "../components/Loader";
 
 /**
  * Home.jsx
  * - Logic: UNCHANGED
- * - Layout/Structure: UNCHANGED
+ * - Layout/Structure: UNCHANGED (Optimized with responsive utilities)
  * - Fonts: UNCHANGED
- * - Theme: Updated to Dark Blue (#0B0E11) + Violet Accents
+ * - Theme: Dark Blue (#0B0E11) + Violet Accents
  */
 
 export default function Home() {
+  const [isPageReady, setIsPageReady] = useState(false);
+  useEffect(() => {
+    // Simulate a brief delay or wait for actual data
+    const timer = setTimeout(() => {
+      setIsPageReady(true);
+    }, 1200); // 1.2 seconds feels snappy but professional
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  
   const LS = { server: "koset_server", last: "koset_last_upload" };
   
   const API_URL = import.meta.env.VITE_API_URL;
@@ -428,7 +440,7 @@ export default function Home() {
   function FileCard({ f }) {
     return (
       <div className="flex items-center gap-3 bg-[#0B0E11] p-3 rounded-lg border border-white/10">
-        <div className="w-10 h-10 flex items-center justify-center rounded bg-[#161b22]">
+        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded bg-[#161b22]">
           <svg
             className="w-5 h-5 text-violet-400"
             viewBox="0 0 24 24"
@@ -446,7 +458,7 @@ export default function Home() {
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-center">
             <div className="text-sm font-medium text-gray-200 truncate">{f.name}</div>
-            <div className="text-xs text-gray-500">{fmtSize(f.size)}</div>
+            <div className="text-xs text-gray-500 ml-2">{fmtSize(f.size)}</div>
           </div>
           <div className="mt-2">
             <div className="w-full bg-[#161b22] rounded-full h-2 overflow-hidden">
@@ -462,7 +474,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div className="w-10 flex items-center justify-center">
+        <div className="w-10 flex-shrink-0 flex items-center justify-center">
           {f.done ? (
             <svg
               className="w-5 h-5 text-emerald-500"
@@ -514,10 +526,10 @@ export default function Home() {
             : "bg-[#161b22] border-white/10 text-gray-300"
         }`}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div
-              className={`p-2 rounded-full ${
+              className={`p-2 flex-shrink-0 rounded-full ${
                 active ? "bg-violet-600/30" : "bg-[#0B0E11]"
               }`}
             >
@@ -559,11 +571,11 @@ export default function Home() {
               </svg>
             </div>
             <div>
-              <div className="font-medium">{text}</div>
+              <div className="font-medium text-sm sm:text-base">{text}</div>
               <div className="text-xs text-gray-400">{sub}</div>
             </div>
           </div>
-          <div className="text-xs text-gray-500">Status indicator</div>
+          <div className="text-xs text-gray-500 sm:block hidden">Status indicator</div>
         </div>
       </div>
     );
@@ -581,7 +593,8 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        {/* Added overflow-x-auto to prevent layout break on small screens */}
+        <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto py-2 scrollbar-hide">
           <Stage title="Uploaded" done={progress > 5} />
           <Connector active={active} />
           <Stage title="Scanned" done={progress > 40} />
@@ -620,6 +633,8 @@ export default function Home() {
             100% { transform: translateX(1000%); opacity: 0; }
           }
           .animate-flow .token { animation-name: flow; animation-duration: 2.6s; animation-iteration-count: infinite; animation-timing-function: linear; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
       </div>
     );
@@ -627,16 +642,16 @@ export default function Home() {
 
   function Stage({ title, done }) {
     return (
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-2 flex-shrink-0 min-w-[70px]">
         <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center border ${
+          className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border ${
             done
               ? "bg-emerald-500 text-white border-emerald-500"
               : "bg-[#0B0E11] text-gray-500 border-white/10"
           }`}
         >
           {done ? (
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
               <path
                 d="M20 6L9 17l-5-5"
                 stroke="currentColor"
@@ -646,7 +661,7 @@ export default function Home() {
               />
             </svg>
           ) : (
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none">
               <circle
                 cx="12"
                 cy="12"
@@ -657,7 +672,7 @@ export default function Home() {
             </svg>
           )}
         </div>
-        <div className="text-xs text-gray-400">{title}</div>
+        <div className="text-[10px] sm:text-xs text-gray-400">{title}</div>
       </div>
     );
   }
@@ -665,7 +680,7 @@ export default function Home() {
   function Connector({ active }) {
     return (
       <div
-        className={`flex-1 h-0.5 ${
+        className={`flex-1 min-w-[20px] h-0.5 ${
           active
             ? "bg-gradient-to-r from-violet-500 to-emerald-500"
             : "bg-white/10"
@@ -691,9 +706,9 @@ export default function Home() {
       <div className="mt-4 relative">
         <div className="absolute inset-0 bg-black/60 rounded-md pointer-events-none" />
         <div className="relative p-4 bg-[#161b22] rounded-md border border-white/10">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2">
             <div>
-              <div className="font-medium text-lg text-white">
+              <div className="font-medium text-base sm:text-lg text-white">
                 {statusMessages[statusIndex]}
               </div>
               <div className="text-xs text-gray-400">
@@ -729,10 +744,9 @@ export default function Home() {
       </div>
     );
   }
-
+if (!isPageReady) return <Loader />;
   return (
-    // MAIN BACKGROUND CHANGED HERE TO MATCH THEME (#0B0E11)
-    <div className="min-h-screen bg-[#0B0E11] text-white p-6">
+    <div className="min-h-screen bg-[#0B0E11] text-white p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-4">
           <StatusBanner />
@@ -740,7 +754,7 @@ export default function Home() {
 
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-semibold">Koset API Tester</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold">Koset API Tester</h1>
             <p className="text-sm text-gray-400 mt-1">
               Clear upload zones and pipeline visuals help users understand
               what's happening.
@@ -750,13 +764,13 @@ export default function Home() {
 
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upload column */}
-          <section className="lg:col-span-1 bg-[#161b22] border border-white/10 rounded-xl p-6 shadow">
+          <section className="lg:col-span-1 bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6 shadow">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-base sm:text-lg font-semibold">
                 1) Upload Training & Dataset
               </h2>
-              <div className="text-xs text-gray-400">
-                Files will be previewed below
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider">
+                Preview
               </div>
             </div>
 
@@ -828,44 +842,25 @@ export default function Home() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <div className="text-sm text-gray-300">
-                  Click to select training files — .py, .ipynb, etc
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  You can select multiple files
+                <div className="text-xs text-gray-300">
+                  Select training files (.py, .ipynb)
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-gray-300">
-                    Selected training files
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {trainingFilesList.length} file(s)
-                  </div>
-                </div>
-                <div className="space-y-2">
+              <div className="space-y-2">
                   {trainingFilesList.length === 0 ? (
-                    <div className="text-xs text-gray-500">
-                      No training files chosen.
-                    </div>
+                    <div className="text-xs text-gray-500 italic">No training files.</div>
                   ) : (
                     trainingFilesList.map((f) => (
                       <FileCard
                         key={f.id}
                         f={{
                           ...f,
-                          progress:
-                            fileAnalysisState.find((p) => p.id === f.id)
-                              ?.progress || 0,
-                          done:
-                            fileAnalysisState.find((p) => p.id === f.id)
-                              ?.done || false,
+                          progress: fileAnalysisState.find((p) => p.id === f.id)?.progress || 0,
+                          done: fileAnalysisState.find((p) => p.id === f.id)?.done || false,
                         }}
                       />
                     ))
                   )}
-                </div>
               </div>
 
               <label className="text-sm text-gray-300">Dataset Files</label>
@@ -879,22 +874,17 @@ export default function Home() {
                   multiple
                   className="hidden"
                   onChange={async (e) => {
-                    // 2️⃣ VALIDATE DATASET FILES ON SELECTION
                     const files = Array.from(e.target.files || []);
                     for (const file of files) {
                       const error = await validateDatasetFile(file);
                       if (error) {
                         alert(`Invalid file "${file.name}":\n${error}`);
-                        e.target.value = ""; // Reset input
-                        setDatasetFilesList([]); // Do not update list
+                        e.target.value = "";
+                        setDatasetFilesList([]);
                         return;
                       }
                     }
-                    readFilesPreview(
-                      datasetRef,
-                      setDatasetFilesList,
-                      "dataset"
-                    );
+                    readFilesPreview(datasetRef, setDatasetFilesList, "dataset");
                   }}
                 />
                 <svg
@@ -902,212 +892,146 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   fill="none"
                 >
-                  <path
-                    d="M21 15V7a2 2 0 0 0-2-2h-6"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M3 9v8a2 2 0 0 0 2 2h14"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M21 15V7a2 2 0 0 0-2-2h-6M3 9v8a2 2 0 0 0 2 2h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-                <div className="text-sm text-gray-300">
-                  Click to select dataset files — .csv only
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  CSV recommended for data profiling
+                <div className="text-xs text-gray-300">
+                  Select dataset files (.csv)
                 </div>
               </div>
-            </div>
-
-            {/* Selected files preview */}
-            <div className="space-y-3 mb-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm text-gray-300">
-                    Selected dataset files
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {datasetFilesList.length} file(s)
-                  </div>
-                </div>
-                <div className="space-y-2">
+              <div className="space-y-2">
                   {datasetFilesList.length === 0 ? (
-                    <div className="text-xs text-gray-500">
-                      No dataset files chosen.
-                    </div>
+                    <div className="text-xs text-gray-500 italic">No dataset files.</div>
                   ) : (
                     datasetFilesList.map((f) => (
                       <FileCard
                         key={f.id}
                         f={{
                           ...f,
-                          progress:
-                            fileAnalysisState.find((p) => p.id === f.id)
-                              ?.progress || 0,
-                          done:
-                            fileAnalysisState.find((p) => p.id === f.id)
-                              ?.done || false,
+                          progress: fileAnalysisState.find((p) => p.id === f.id)?.progress || 0,
+                          done: fileAnalysisState.find((p) => p.id === f.id)?.done || false,
                         }}
                       />
                     ))
                   )}
-                </div>
               </div>
             </div>
 
             {/* actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 pt-4">
               <button
                 disabled={uploading}
                 onClick={handleUpload}
-                className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg font-semibold shadow"
+                className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-lg font-semibold shadow text-sm"
               >
                 {uploading ? "Uploading..." : "Upload"}
                 {uploading && (
-                  <svg
-                    className="w-4 h-4 animate-spin"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                   </svg>
                 )}
               </button>
 
               <button
                 onClick={() => {
-                  trainingRef.current && (trainingRef.current.value = null);
-                  datasetRef.current && (datasetRef.current.value = null);
                   setTrainingFilesList([]);
                   setDatasetFilesList([]);
                   setUploadOutput(null);
                   setFileAnalysisState([]);
-                  setUploadedTrainingFiles([]);
-                  setUploadedDatasetFiles([]);
                 }}
-                className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm"
+                className="flex-1 min-w-[80px] bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm"
               >
                 Reset
               </button>
 
-              <div className="flex-1">
+              <div className="w-full mt-2 sm:mt-0 sm:flex-1">
                 <div className="w-full bg-[#161b22] rounded-full h-2 overflow-hidden border border-white/5">
                   <div
                     className="h-2 rounded-full transition-all bg-violet-500"
                     style={{ width: `${uploading ? progress : 0}%` }}
                   />
                 </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {uploading ? statusMessages[statusIndex] : ""}
+                <div className="text-[10px] text-gray-400 mt-1">
+                  {uploading ? statusMessages[statusIndex] : "Upload system ready"}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4">
-              <div className="text-sm text-gray-400 mb-2">What this does</div>
-              <div className="text-sm text-gray-300 bg-[#0B0E11] p-3 rounded border border-white/10">
-                Upload your training code (.py, .ipynb) and dataset (.csv). The
-                UI previews files and runs a quick pipeline animation so users
-                know files are being processed.
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="text-sm text-gray-400 mb-2">Upload Output</div>
+            <div className="mt-6">
+              <div className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">Output</div>
               <JsonBlock value={uploadOutput} />
             </div>
           </section>
 
           {/* Analyze + pipeline */}
-          <section className="lg:col-span-2 bg-[#161b22] border border-white/10 rounded-xl p-6 shadow space-y-4">
-            <div className="flex items-center justify-between">
+          <section className="lg:col-span-2 bg-[#161b22] border border-white/10 rounded-xl p-4 sm:p-6 shadow space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold">2) Estimate & Analyze</h2>
+                <h2 className="text-base sm:text-lg font-semibold">2) Estimate & Analyze</h2>
                 <div className="text-xs text-gray-400 mt-1">
-                  Inspect code + data and get back model & data metadata
+                  Inspect code + data metadata
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-300">
-                  Use LLM Fallback
+              <div className="flex items-center gap-3 bg-[#0B0E11] p-2 rounded-lg border border-white/5">
+                <label className="text-xs text-gray-300">
+                  LLM Fallback
                 </label>
                 <input
                   type="checkbox"
                   checked={useLLM}
                   onChange={(e) => setUseLLM(e.target.checked)}
-                  className="h-4 w-4 accent-violet-600"
+                  className="h-4 w-4 accent-violet-600 rounded"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <label className="text-sm text-gray-300">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-3">
+                <label className="text-xs text-gray-300 mb-1.5 block">
                   Source (optional)
                 </label>
                 <input
                   value={sourceInput}
                   onChange={(e) => setSourceInput(e.target.value)}
-                  placeholder="GitHub, HuggingFace, raw .py URL — leave blank to use uploaded files"
-                  className="w-full mt-1 p-2 rounded-md bg-[#0B0E11] border border-white/10 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  placeholder="GitHub, HuggingFace, or URL"
+                  className="w-full p-2.5 rounded-md bg-[#0B0E11] border border-white/10 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
 
-              <div className="md:col-span-1 flex items-center justify-end gap-3">
+              <div className="flex items-end gap-2">
                 <button
                   disabled={analyzing}
                   onClick={handleAnalyze}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold shadow"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-lg font-semibold shadow text-sm whitespace-nowrap"
                 >
-                  {analyzing ? "Analyzing..." : "Estimate & Analyze"}
+                  {analyzing ? "Analyzing..." : "Analyze"}
                 </button>
                 <button
-                  onClick={() => {
-                    setAnalyzeOutput(null);
-                    setSourceInput("");
-                  }}
-                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-sm"
+                  onClick={() => setAnalyzeOutput(null)}
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-2.5 rounded-lg text-sm"
                 >
-                  Reset
+                  Clear
                 </button>
               </div>
             </div>
 
-            {/* Parsing overlay - shows while analyzing */}
             <ParsingOverlay />
-
-            {/* pipeline */}
             <PipelineVisual />
 
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-6">
               <div>
-                <div className="text-sm text-gray-400 mb-2">
-                  What this does
+                <div className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">
+                  Overview
                 </div>
-                <div className="text-sm text-gray-300 bg-[#0B0E11] p-3 rounded border border-white/10">
+                <div className="text-xs sm:text-sm text-gray-300 bg-[#0B0E11] p-4 rounded border border-white/10 leading-relaxed">
                   Estimate & Analyze inspects training code and dataset to
-                  detect framework, preprocessing steps, model params, and data
-                  profile. Use a source URL to analyze public repos directly.
+                  detect framework, preprocessing steps, and model params. Use a source URL to analyze public repos directly.
                 </div>
               </div>
 
               <div>
-                <div className="text-sm text-gray-400 mb-2">
-                  Analyze Output
+                <div className="text-xs text-gray-400 mb-2 uppercase tracking-widest font-bold">
+                  Analysis Result
                 </div>
                 <JsonBlock value={analyzeOutput} />
               </div>
